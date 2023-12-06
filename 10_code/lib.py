@@ -23,9 +23,7 @@ def getting_soup(movie_title, time_waiting=5):
         driver = webdriver.Chrome(options=options)
 
         # Navigate to the website
-        driver.get(
-            "https://www.rottentomatoes.com/"
-        )  # Replace 'https://example.com' with the actual URL of the website
+        driver.get("https://www.rottentomatoes.com/")
 
         # Locate the search input field by class and data-qa attribute
 
@@ -136,11 +134,7 @@ def getting_critics(movie_rt_format):
             soup = BeautifulSoup(response.text, "html.parser")
 
             # Find the <div> with class 'review_table' and data-paginationmanager attribute
-            review_div = soup.find(
-                "div",
-                class_="review_table",
-                attrs={"data-paginationmanager": "paginatedDataContainer"},
-            )
+            review_div = soup.find("div", class_="review_table")
 
             # Check if the review_div is found before proceeding
             if review_div:
