@@ -148,9 +148,9 @@ def getting_critics(movie_rt_format):
 
                 # Print the list of review texts
                 # print(review_texts)
-        else:
-            review_texts = None
-            print("Review div not found.")
+            else:
+                review_texts = None
+                print("Review div not found.")
 
         return review_texts
     else:
