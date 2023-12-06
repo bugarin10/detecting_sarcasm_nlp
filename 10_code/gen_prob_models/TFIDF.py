@@ -13,7 +13,7 @@ reviews = []
 title_to_tag = {}
 
 # Read reviews and titles from file
-with open("LDA_test_texts/reviews_test.txt", "r") as file:
+with open("../00_data/LDA_test_texts/reviews_test.txt", "r") as file:
     lines = file.readlines()
     for line in lines:
         split_line = line.split("):")
@@ -24,7 +24,7 @@ with open("LDA_test_texts/reviews_test.txt", "r") as file:
             reviews.append(review)
 
 # Read tags from file and map titles to tags
-with open("LDA_test_texts/oscar_status.txt", "r") as file:
+with open("../00_data/LDA_test_texts/oscar_status.txt", "r") as file:
     lines = file.readlines()
     for line in lines:
         split_line = line.split("):")
