@@ -51,7 +51,7 @@ data["winner"] = data["winner"] + 1
 
 data = data[data["top_critics"].isna() == False]
 
-data = data[data["top_critics"] == ""]
+data = data[data["top_critics"] != ""]
 
 data = data[~data["top_critics"].isnull()]
 
