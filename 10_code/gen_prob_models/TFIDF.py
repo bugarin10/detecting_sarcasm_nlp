@@ -7,9 +7,8 @@ nltk.download("stopwords")
 nltk.download("punkt")
 
 from nltk.tokenize import word_tokenize
-from nltk.stem.snowball import PorterStemmer
 from nltk.corpus import stopwords
-from sklearn.feature_extraction.text import TfidfVectorizer, TfidfTransformer
+from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.metrics import accuracy_score
@@ -20,9 +19,10 @@ import gensim.downloader
 import nltk
 import numpy as np
 from numpy.typing import NDArray
-from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfTransformer
-from sklearn.linear_model import LogisticRegression
+
+from torchtext.data.utils import get_tokenizer
+from torchtext.vocab import build_vocab_from_iterator
 
 import os
 import pandas as pd
@@ -77,7 +77,7 @@ def data_to_df(titles, reviews, labels):
 
 
 # Writing a function to create documents for winners, nominees, and no recognition:
-def create_documents(df):
+def create_documents_gpt(df):
     # Create documents for winners, nominees, and no recognition
     winners = df[df["label"] == "Winner"]
     winners = winners["review"].tolist()
@@ -89,6 +89,18 @@ def create_documents(df):
     return winners, nominees, no_recognition
 
 
+def create_documents_real(df):
+    # Create documents for winners, nominees, and no recognition
+    winners = df[df["winner"] == 2]
+    winners = winners["top_critics"].tolist()
+    nominees = df[df["winner"] == 1]
+    nominees = nominees["top_critics"].tolist()
+    no_recognition = df[df["winner"] == 0]
+    no_recognition = no_recognition["top_critics"].tolist()
+
+    return winners, nominees, no_recognition
+
+
 def create_doc_list(winner_list, nominee_list, no_rec_list):
     documents = [winner_list, nominee_list, no_rec_list]
     return documents
@@ -96,15 +108,9 @@ def create_doc_list(winner_list, nominee_list, no_rec_list):
 
 # Create vocabulary map
 def create_vocabulary_map(documents):
-    stop_words = set(stopwords.words("english"))
-    # Create vocabulary from all tokens in documents
+    tokens = get_tokenizer("basic_english")
     vocabulary = sorted(
-        set(
-            token
-            for document in documents
-            for token in document
-            if token not in stop_words
-        )
+        set(token for document in documents for token in get_tokenizer(document))
     ) + [None]
     # Create vocabulary map with token indices
     vocabulary_map = {token: idx for idx, token in enumerate(vocabulary)}
@@ -210,16 +216,13 @@ def naive_bayes(X_train, X_test, y_train, y_test):
 
 
 def prep_review(review: str) -> FloatArray:
-    stop_words = set(stopwords.words("english"))
-    # Create vocabulary map
-    vocabulary = sorted(set(word for word in reviews if word not in stop_words)) + [
+    vocabulary = sorted(set(word for word in get_tokenizer(review))) + [
         None
     ]  # Assuming 'reviews' contains all words from your training data
     vocabulary_map = {word: idx for idx, word in enumerate(vocabulary)}
-    tokenized_review = word_tokenize(review.lower())
 
     # Create one-hot encoding for review using the provided vocabulary_map
-    one_hot_review = [onehot(vocabulary_map, word) for word in tokenized_review]
+    one_hot_review = [onehot(vocabulary_map, word) for word in review]
 
     # Sum token embeddings
     sum_review = sum_token_embeddings(one_hot_review)
@@ -230,7 +233,7 @@ def prep_review(review: str) -> FloatArray:
 
 
 def classify_review(df: DataFrame, review: str) -> str:
-    winners, nominees, no_recognition = create_documents(df)
+    winners, nominees, no_recognition = create_documents_real(df)
     X_train, y_train, X_test, y_test = generate_data_tfidf(
         winners, nominees, no_recognition
     )
@@ -263,11 +266,14 @@ def classify_review_with_model(tokenized_review, X_train, y_train, best_alpha):
 
 
 if __name__ == "__main__":
-    movies, reviews, labels = read_data(
-        "../../00_data/LDA_test_texts/reviews_test.txt",
-        "../../00_data/LDA_test_texts/oscar_status.txt",
-    )
-    oscars_df = data_to_df(movies, reviews, labels)
+    # movies, reviews, labels = read_data(
+    #     "../../00_data/LDA_test_texts/reviews_test.txt",
+    #     "../../00_data/LDA_test_texts/oscar_status.txt",
+    # )
+    # oscars_df = data_to_df(movies, reviews, labels)
+
+    oscars_df = pd.read_csv("../../00_data/final_data.csv")
+    w, n, l = create_documents_real(oscars_df)
     input_review = "This movie was so good! I loved it!"
 
     classification = classify_review(oscars_df, input_review)
